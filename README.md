@@ -10,11 +10,11 @@ one web crawler frame based on golang
 该网络爬虫主要由五个部分组成：调度器、中间件、下载器、分析器、条目处理器。下面分别介绍每部分的功能。
 ![网络爬虫框架](http://img.blog.csdn.net/20180314160648815?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMjQxMjY4OQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
- - **调度器：**对整个爬虫框架进行调度，所有消息都要经过调度器，因此同时肩负着缓存和产生系统信息概要的功能。主要包括辅助工具、系统信息概要、缓存、调度主体四个部分；
- - **中间件：**承上启下，辅助调度器调度整个系统，主要包括ID生成器、抽象池、停止信号、通道管理；
- - **下载器：**接受输入请求，转化为http请求，下载相应的网页，供分析器分析。设计为多线程，可以同时下载多个页面，并且通过实现一个抽象池来管理线程数量；
- - **分析器：**接受作为输入的相应，并且还原为HTTP相应，同时分析生成网页中新的HTTP请求（网页中链接）以及要进一步分析的条目。设计为多线程，可以同时处理多个相应，并且通过实现一个抽象池来管理线程数量；
- - **条目处理管道：**包括多个条目处理器，接受分析器传递的条目，最后给出处理结果。可以根据自己的需要定制分析方式，后文中将给出一个条目处理管道demo。
+ - **调度器**对整个爬虫框架进行调度，所有消息都要经过调度器，因此同时肩负着缓存和产生系统信息概要的功能。主要包括辅助工具、系统信息概要、缓存、调度主体四个部分；
+ - **中间件**承上启下，辅助调度器调度整个系统，主要包括ID生成器、抽象池、停止信号、通道管理；
+ - **下载器**接受输入请求，转化为http请求，下载相应的网页，供分析器分析。设计为多线程，可以同时下载多个页面，并且通过实现一个抽象池来管理线程数量；
+ - **分析器**接受作为输入的相应，并且还原为HTTP相应，同时分析生成网页中新的HTTP请求（网页中链接）以及要进一步分析的条目。设计为多线程，可以同时处理多个相应，并且通过实现一个抽象池来管理线程数量；
+ - **条目处理管道**包括多个条目处理器，接受分析器传递的条目，最后给出处理结果。可以根据自己的需要定制分析方式，后文中将给出一个条目处理管道demo。
 
 #三、数据流
 
@@ -26,7 +26,7 @@ one web crawler frame based on golang
 
 ##1、调度器
 
-（1）调度器主体
+（1）调度器主体  
 主要用于启动和停止整个系统，并且从中获取一些系统运行的状态。
 ```
 type Scheduler interface {
@@ -53,7 +53,7 @@ type Scheduler interface {
 	Summary(prefix string) SchedSummary
 }
 ```
-（2）系统信息摘要
+（2）系统信息摘要  
 通过此接口获取系统的整体情况
 ```
 type SchedSummary interface {
@@ -62,7 +62,7 @@ type SchedSummary interface {
 	Same(other SchedSummary) bool // 判断是否与另一份摘要信息相同。
 }
 ```
-（3）缓存
+（3）缓存  
 一般来说一个页面会有多个链接，这样会导致深一层的请求远多于下载器的下载线程，所以需要先把一部分请求缓存起来，等到下载线程空闲再发送出去。
 ```
 type requestCache interface {
@@ -80,7 +80,7 @@ type requestCache interface {
 	summary() string
 }
 ```
-（4）监控器
+（4）监控器  
 监控整个系统的运行，在所有线程都结束之后及时返回信号，以便于调度器主体终止整个系统。
 
 ```
@@ -94,7 +94,7 @@ func Monitoring(scheduler sched.Scheduler, intervalNs time.Duration, maxIdleCoun
 ```
 
 ##2、中间件
-（1）ID生成器
+（1）ID生成器  
 生成一个系统中唯一的ID，保证下载器池和分析器池的唯一性。
 ```
 type IdGenerator interface {
@@ -102,7 +102,7 @@ type IdGenerator interface {
 }
 ```
 
-（2）抽象池
+（2）抽象池  
 从下载器池和分析器池中抽象出来的票池，方便控制goroutine的数量。其中，Entity可以理解为上一个接口中的唯一ID实体。
 ```
 type Entity interface {
@@ -116,7 +116,7 @@ type Pool interface {
 	Used() uint32
 }
 ```
-（3）停止信号
+（3）停止信号  
 由于本框架是多线程的，所以需要一个信号来关闭整个系统。
 ```
 type StopSign interface {
@@ -140,7 +140,7 @@ type StopSign interface {
 
 ```
 
-（4）通道管理
+（4）通道管理  
 由于本系统是多线程的，所以将通道管理放在一起方便管理，分别管理请求通道、响应通道、条目处理通道、错误通道。
 ```
 type ChannelManager interface {
@@ -241,5 +241,5 @@ type ProcessItem func(item base.Item) (result base.Item, err error)
 本框架的初级版可以定制响应解析函数和条目处理函数，根据自己的需求实现。如果有需要的话，下载代码之后更改demo中的ParseResponse、ProcessItem 函数即可定制。更进一步的，可以跟据自己的需求实现上述框架中的接口，改变数据处理方式。
 
 # 参考文献
-> 《go语言编程实战》
-> https://github.com/hustfoam/WebCrawler
+> *《go语言编程实战》 作者：郝林*  
+> *https://github.com/hustfoam/WebCrawler*
