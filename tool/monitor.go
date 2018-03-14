@@ -39,13 +39,7 @@ type Record func(level byte, content string)
 // 参数detailSummary被用来表示是否需要详细的摘要信息。
 // 参数record代表日志记录函数。
 // 当监控结束之后，该方法会会向作为唯一返回值的通道发送一个代表了空闲状态检查次数的数值。
-func Monitoring(
-	scheduler sched.Scheduler,
-	intervalNs time.Duration,
-	maxIdleCount uint,
-	autoStop bool,
-	detailSummary bool,
-	record Record) <-chan uint64 {
+func Monitoring(scheduler sched.Scheduler, intervalNs time.Duration, maxIdleCount uint, autoStop bool, detailSummary bool, record Record) <-chan uint64 {
 	if scheduler == nil { // 调度器不能不可用！
 		panic(errors.New("The scheduler is invalid!"))
 	}
