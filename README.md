@@ -5,26 +5,26 @@ one web crawler frame based on golang
 
 这是一个用go语言实现的网络爬虫框架，本框架的核心在于可定制和可扩展，用户可以根据自己的需要定制各个模块，同时，也给出了一个实现demo供参考。Go语言的初学者也可以通过这个项目熟悉go语言的各种特性，尤其是并发编程。
 
-#二、项目框架介绍
+# 二、项目框架介绍
 
 该网络爬虫主要由五个部分组成：调度器、中间件、下载器、分析器、条目处理器。下面分别介绍每部分的功能。
 ![网络爬虫框架](http://img.blog.csdn.net/20180314160648815?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMjQxMjY4OQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
- - **调度器**对整个爬虫框架进行调度，所有消息都要经过调度器，因此同时肩负着缓存和产生系统信息概要的功能。主要包括辅助工具、系统信息概要、缓存、调度主体四个部分；
- - **中间件**承上启下，辅助调度器调度整个系统，主要包括ID生成器、抽象池、停止信号、通道管理；
- - **下载器**接受输入请求，转化为http请求，下载相应的网页，供分析器分析。设计为多线程，可以同时下载多个页面，并且通过实现一个抽象池来管理线程数量；
- - **分析器**接受作为输入的相应，并且还原为HTTP相应，同时分析生成网页中新的HTTP请求（网页中链接）以及要进一步分析的条目。设计为多线程，可以同时处理多个相应，并且通过实现一个抽象池来管理线程数量；
- - **条目处理管道**包括多个条目处理器，接受分析器传递的条目，最后给出处理结果。可以根据自己的需要定制分析方式，后文中将给出一个条目处理管道demo。
+ - **调度器**：对整个爬虫框架进行调度，所有消息都要经过调度器，因此同时肩负着缓存和产生系统信息概要的功能。主要包括辅助工具、系统信息概要、缓存、调度主体四个部分；
+ - **中间件**：承上启下，辅助调度器调度整个系统，主要包括ID生成器、抽象池、停止信号、通道管理；
+ - **下载器**：接受输入请求，转化为http请求，下载相应的网页，供分析器分析。设计为多线程，可以同时下载多个页面，并且通过实现一个抽象池来管理线程数量；
+ - **分析器**：接受作为输入的相应，并且还原为HTTP相应，同时分析生成网页中新的HTTP请求（网页中链接）以及要进一步分析的条目。设计为多线程，可以同时处理多个相应，并且通过实现一个抽象池来管理线程数量；
+ - **条目处理管道**：包括多个条目处理器，接受分析器传递的条目，最后给出处理结果。可以根据自己的需要定制分析方式，后文中将给出一个条目处理管道demo。
 
-#三、数据流
+# 三、数据流
 
 ![爬虫数据流](http://img.blog.csdn.net/20180314113910793?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdTAxMjQxMjY4OQ==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
 输入首次请求的网站之后，下载响应网站形成响应数据传送给分析器，分析器分离其中的链接和要处理的条目，链接形成下一层请求给调度器缓存起来，条目发送给条目处理管道进一步处理，最后给出最终处理结果。
 
-#四、各模块接口设计
+# 四、各模块接口设计
 
-##1、调度器
+## 1、调度器
 
 （1）调度器主体  
 主要用于启动和停止整个系统，并且从中获取一些系统运行的状态。
@@ -93,7 +93,7 @@ type requestCache interface {
 func Monitoring(scheduler sched.Scheduler, intervalNs time.Duration, maxIdleCount uint, autoStop bool, detailSummary bool, record Record) <-chan uint64
 ```
 
-##2、中间件
+## 2、中间件
 （1）ID生成器  
 生成一个系统中唯一的ID，保证下载器池和分析器池的唯一性。
 ```
@@ -165,7 +165,7 @@ type ChannelManager interface {
 }
 
 ```
-##3、下载器
+## 3、下载器
 用于根据请求下载响应的网页。
 ```
 type PageDownloader interface {
@@ -174,7 +174,7 @@ type PageDownloader interface {
 }
 
 ```
-##4、分析器
+## 4、分析器
 获取下载器下载的内容，进一步分析，剥离出下一层请求和需要处理的条目。
 ```
 type Analyzer interface {
@@ -182,7 +182,7 @@ type Analyzer interface {
 	Analyze(respParsers []ParseResponse, resp base.Response) ([]base.Data, []error) // 根据规则分析响应并返回请求和条目。
 }
 ```
-##5、条目处理管道
+## 5、条目处理管道
 分别处理每一个条目，并且通过管道发送错误信息。
 ```
 type ItemPipeline interface {
@@ -204,7 +204,7 @@ type ItemPipeline interface {
 }
 
 ```
-##6、其他基础结构
+## 6、其他基础结构
 
 ```
 type Data interface {
@@ -224,10 +224,10 @@ type Response struct {
 }
 
 ```
-#五、具体实现
+# 五、具体实现
 
 各接口的具体实现见我的github: https://github.com/hustfoam/WebCrawler
-#六、定制demo示例
+# 六、定制demo示例
 
 主要需要实现响应解析函数以及条目处理器函数，其中条目处理函数可以是一系列处理方式，具体见我的github：https://github.com/hustfoam/WebCrawler/blob/master/demo/demo.go
 
@@ -236,7 +236,7 @@ type ParseResponse func(httpResp *http.Response, respDepth uint32) ([]base.Data,
 type ProcessItem func(item base.Item) (result base.Item, err error)
 ```
 
-#七、扩展
+# 七、扩展
 
 本框架的初级版可以定制响应解析函数和条目处理函数，根据自己的需求实现。如果有需要的话，下载代码之后更改demo中的ParseResponse、ProcessItem 函数即可定制。更进一步的，可以跟据自己的需求实现上述框架中的接口，改变数据处理方式。
 
